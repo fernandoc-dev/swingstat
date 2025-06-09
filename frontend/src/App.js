@@ -4,6 +4,8 @@ import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Torneos from './pages/Torneos';
 import Partidos from './pages/Partidos';
+import Equipos from './pages/Equipos';
+import Jugadores from './pages/Jugadores';
 
 function App() {
   return (
@@ -14,8 +16,8 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/torneos" element={<Torneos />} />
           <Route path="/partidos" element={<Partidos />} />
-          <Route path="/equipos" element={<div>Equipos</div>} />
-          <Route path="/jugadores" element={<div>Jugadores</div>} />
+          <Route path="/equipos" element={<Equipos />} />
+          <Route path="/jugadores" element={<Jugadores />} />
           <Route path="/performance" element={<div>Performance</div>} />
           <Route path="/informes" element={<div>Informes</div>} />
         </Routes>
