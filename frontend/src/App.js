@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
+import Torneos from './pages/Torneos';
+import Partidos from './pages/Partidos';
 
 function App() {
   return (
@@ -10,8 +12,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/torneos" element={<div>Torneos</div>} />
-          <Route path="/partidos" element={<div>Partidos</div>} />
+          <Route path="/torneos" element={<Torneos />} />
+          <Route path="/partidos" element={<Partidos />} />
           <Route path="/equipos" element={<div>Equipos</div>} />
           <Route path="/jugadores" element={<div>Jugadores</div>} />
           <Route path="/performance" element={<div>Performance</div>} />
