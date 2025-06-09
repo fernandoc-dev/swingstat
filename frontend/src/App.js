@@ -6,6 +6,8 @@ import Torneos from './pages/Torneos';
 import Partidos from './pages/Partidos';
 import Equipos from './pages/Equipos';
 import Jugadores from './pages/Jugadores';
+import Performance from './pages/Performance';
+import Informes from './pages/Informes';
 
 function App() {
   return (
@@ -18,8 +20,8 @@ function App() {
           <Route path="/partidos" element={<Partidos />} />
           <Route path="/equipos" element={<Equipos />} />
           <Route path="/jugadores" element={<Jugadores />} />
-          <Route path="/performance" element={<div>Performance</div>} />
-          <Route path="/informes" element={<div>Informes</div>} />
+          <Route path="/performance" element={<Performance />} />
+          <Route path="/informes" element={<Informes />} />
         </Routes>
       </Layout>
     </Router>
