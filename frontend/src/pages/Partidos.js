@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AddButton from '../components/AddButton';
 
 function Partidos() {
   // Estado para los torneos (temporalmente con datos de ejemplo)
@@ -98,13 +99,7 @@ function Partidos() {
     <div className="container mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Partidos</h1>
-        <button
-          onClick={handleCrear}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
-        >
-          <span className="mr-2">➕</span>
-          Nuevo Partido
-        </button>
+        <AddButton onClick={handleCrear} label="Nuevo Partido" />
       </div>
 
       {/* Tabla de Partidos */}
