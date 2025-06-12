@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api import torneo
+
 app = FastAPI(
     title="Swingstat API",
     description="API para el seguimiento de rendimiento de jugadores de béisbol",
@@ -16,6 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(torneo.router)
 
 @app.get("/")
 async def root():

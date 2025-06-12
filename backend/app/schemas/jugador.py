@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, EmailStr
 from typing import Optional
-from datetime import date
+from datetime import date, datetime
 
 
 class JugadorBase(BaseModel):
@@ -33,8 +33,8 @@ class JugadorUpdate(BaseModel):
 
 class JugadorInDB(JugadorBase):
     id: int
-    created_at: date
-    updated_at: date
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
