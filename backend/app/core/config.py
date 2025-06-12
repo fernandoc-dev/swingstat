@@ -8,8 +8,8 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
 
     POSTGRES_SERVER: str = "db"
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_USER: str = "swingstat"
+    POSTGRES_PASSWORD: str = "swingstat"
     POSTGRES_DB: str = "swingstat"
     SQLALCHEMY_DATABASE_URI: Optional[str] = None
 
