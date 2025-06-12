@@ -1,0 +1,20 @@
+#!/bin/sh
+
+
+echo "=== Alembic Menu ==="
+echo "1) revision (autogenerate)"
+echo "2) upgrade (to head)"
+read -p "Selecciona una opción [1-2]: " option
+
+case $option in
+  1)
+    read -p "Mensaje de la revisión: " message
+    alembic revision --autogenerate -m "$message"
+    ;;
+  2)
+    alembic upgrade head
+    ;;
+  *)
+    echo "Opción inválida."
+    ;;
+esac

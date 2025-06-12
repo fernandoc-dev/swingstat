@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Lista los contenedores activos con número de opción
+containers=($(docker ps --format '{{.ID}} {{.Names}}'))
+count=${#containers[@]}
+
+if [ $count -eq 0 ]; then
+  echo "No hay contenedores activos."
+  exit 1
+fi
+
+echo "Contenedores activos:"
+for i in $(seq 0 2 $(($count - 1))); do
+  index=$(($i / 2 + 1))
+  echo "$index) ${containers[$i+1]} (${containers[$i]})"
+done
+
+# Pedir selección
+read -p "Selecciona un contenedor ingresando el número: " selected
+
+# Validar selección
+selected_index=$(( ($selected - 1) * 2 ))
+if [ "$selected_index" -lt 0 ] || [ "$selected_index" -ge "$count" ]; then
+  echo "Opción inválida."
+  exit 1
+fi
+
+container_id=${containers[$selected_index]}
+
+# Probar bash, si no existe usar sh
+if docker exec "$container_id" bash -c "command -v bash" > /dev/null 2>&1; then
+  docker exec -it "$container_id" bash
+else
+  docker exec -it "$container_id" sh
+fi
+
