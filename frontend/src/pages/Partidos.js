@@ -18,6 +18,8 @@ function Partidos() {
     resultado_visitante: '',
     observaciones: ''
   });
+  const [filtroTorneo, setFiltroTorneo] = useState('');
+  const [filtroBusqueda, setFiltroBusqueda] = useState('');
 
   useEffect(() => {
     cargarDatos();
@@ -124,6 +126,25 @@ function Partidos() {
     return e ? e.nombre : '';
   };
 
+  // Filtrado de partidos
+  const partidosFiltrados = partidos.filter((partido) => {
+    const cumpleTorneo = !filtroTorneo || partido.torneo_id === filtroTorneo || partido.torneo_id === Number(filtroTorneo);
+    // Campos relevantes para búsqueda
+    const campos = [
+      getNombreTorneo(partido.torneo_id),
+      getNombreEquipo(partido.equipo_local_id),
+      getNombreEquipo(partido.equipo_visitante_id),
+      partido.ubicacion,
+      partido.resultado_local,
+      partido.resultado_visitante,
+      partido.observaciones,
+      partido.fecha ? partido.fecha.slice(0, 10) : ''
+    ];
+    const cumpleBusqueda = !filtroBusqueda ||
+      campos.some(valor => valor && valor.toString().toLowerCase().includes(filtroBusqueda.toLowerCase()));
+    return cumpleTorneo && cumpleBusqueda;
+  });
+
   return (
     <div className="container mx-auto">
       {feedback.show && (
@@ -137,10 +158,44 @@ function Partidos() {
         <h1 className="text-3xl font-bold">Partidos</h1>
         <AddButton onClick={handleCrear} label="Nuevo Partido" />
       </div>
+      {/* Filtros */}
+      <div className="bg-white rounded-lg shadow p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Filtrar por Torneo
+            </label>
+            <select
+              className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              value={filtroTorneo}
+              onChange={(e) => setFiltroTorneo(e.target.value)}
+            >
+              <option value="">Todos los torneos</option>
+              {torneos.map(torneo => (
+                <option key={torneo.id} value={torneo.id}>{torneo.nombre}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Buscar
+            </label>
+            <input
+              type="text"
+              className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Buscar por cualquier campo..."
+              value={filtroBusqueda}
+              onChange={(e) => setFiltroBusqueda(e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+      {/* Tabla de Partidos */}
       <div className="bg-white rounded-lg shadow overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Torneo</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lugar</th>
@@ -151,8 +206,9 @@ function Partidos() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {partidos.map((partido) => (
+            {partidosFiltrados.map((partido, idx) => (
               <tr key={partido.id}>
+                <td className="px-6 py-4 whitespace-nowrap text-gray-500">{idx + 1}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-900">{getNombreTorneo(partido.torneo_id)}</div>
                 </td>
