@@ -1,74 +1,141 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AddButton from '../components/AddButton';
+import { torneoService } from '../services/api';
 
 function Torneos() {
-  // Estado para los torneos (temporalmente con datos de ejemplo)
-  const [torneos, setTorneos] = useState([
-    {
-      id: 1,
-      nombre: 'Liga Nacional 2024',
-      fechaInicio: '2024-03-01',
-      fechaConclusión: '2024-08-30',
-      lugar: 'Estadio Nacional'
-    },
-    {
-      id: 2,
-      nombre: 'Copa Regional',
-      fechaInicio: '2024-04-15',
-      fechaConclusión: '2024-06-15',
-      lugar: 'Complejo Deportivo Central'
-    }
-  ]);
-
-  // Estado para el modal de creación/edición
+  // Estados
+  const [torneos, setTorneos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [torneoActual, setTorneoActual] = useState({
     nombre: '',
-    fechaInicio: '',
-    fechaConclusión: '',
-    lugar: ''
+    descripcion: '',
+    fecha_inicio: '',
+    fecha_fin: '',
+    ubicacion: ''
   });
+  const [feedback, setFeedback] = useState({ show: false, message: '', type: '' });
+
+  // Cargar torneos al montar el componente
+  useEffect(() => {
+    cargarTorneos();
+  }, []);
+
+  const cargarTorneos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await torneoService.getAllTorneos();
+      setTorneos(data);
+    } catch (err) {
+      setError('Error al cargar los torneos. Por favor, intente nuevamente.');
+      console.error('Error cargando torneos:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCrear = () => {
     setTorneoActual({
       nombre: '',
-      fechaInicio: '',
-      fechaConclusión: '',
-      lugar: ''
+      descripcion: '',
+      fecha_inicio: '',
+      fecha_fin: '',
+      ubicacion: ''
     });
     setShowModal(true);
   };
 
   const handleEditar = (torneo) => {
-    setTorneoActual(torneo);
+    setTorneoActual({
+      id: torneo.id,
+      nombre: torneo.nombre,
+      descripcion: torneo.descripcion || '',
+      fecha_inicio: torneo.fecha_inicio ? torneo.fecha_inicio.slice(0, 10) : '',
+      fecha_fin: torneo.fecha_fin ? torneo.fecha_fin.slice(0, 10) : '',
+      ubicacion: torneo.ubicacion
+    });
     setShowModal(true);
   };
 
-  const handleEliminar = (id) => {
+  const handleEliminar = async (id) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar este torneo?')) {
-      setTorneos(torneos.filter(t => t.id !== id));
+      try {
+        await torneoService.deleteTorneo(id);
+        setTorneos(torneos.filter(t => t.id !== id));
+        mostrarFeedback('Torneo eliminado exitosamente', 'success');
+      } catch (err) {
+        console.error('Error eliminando torneo:', err);
+        mostrarFeedback('Error al eliminar el torneo', 'error');
+      }
     }
   };
 
-  const handleGuardar = () => {
-    if (torneoActual.id) {
-      // Editar torneo existente
-      setTorneos(torneos.map(t => 
-        t.id === torneoActual.id ? torneoActual : t
-      ));
-    } else {
-      // Crear nuevo torneo
-      const nuevoTorneo = {
-        ...torneoActual,
-        id: Math.max(...torneos.map(t => t.id), 0) + 1
+  const handleGuardar = async () => {
+    try {
+      const torneoPayload = {
+        nombre: torneoActual.nombre,
+        descripcion: torneoActual.descripcion,
+        fecha_inicio: torneoActual.fecha_inicio ? torneoActual.fecha_inicio + 'T00:00:00' : '',
+        fecha_fin: torneoActual.fecha_fin ? torneoActual.fecha_fin + 'T00:00:00' : '',
+        ubicacion: torneoActual.ubicacion
       };
-      setTorneos([...torneos, nuevoTorneo]);
+      if (torneoActual.id) {
+        // Editar torneo existente
+        const torneoActualizado = await torneoService.updateTorneo(torneoActual.id, torneoPayload);
+        setTorneos(torneos.map(t => t.id === torneoActualizado.id ? torneoActualizado : t));
+        mostrarFeedback('Torneo actualizado exitosamente', 'success');
+      } else {
+        // Crear nuevo torneo
+        const nuevoTorneo = await torneoService.createTorneo(torneoPayload);
+        setTorneos([...torneos, nuevoTorneo]);
+        mostrarFeedback('Torneo creado exitosamente', 'success');
+      }
+      setShowModal(false);
+    } catch (err) {
+      console.error('Error guardando torneo:', err);
+      mostrarFeedback('Error al guardar el torneo', 'error');
     }
-    setShowModal(false);
   };
+
+  const mostrarFeedback = (message, type) => {
+    setFeedback({ show: true, message, type });
+    setTimeout(() => {
+      setFeedback({ show: false, message: '', type: '' });
+    }, 3000);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <strong className="font-bold">Error: </strong>
+          <span className="block sm:inline">{error}</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto p-4">
+      {/* Mensaje de feedback */}
+      {feedback.show && (
+        <div className={`fixed top-4 right-4 p-4 rounded-lg shadow-lg ${
+          feedback.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+        } text-white`}>
+          {feedback.message}
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Torneos</h1>
         <AddButton onClick={handleCrear} label="Nuevo Torneo" />
@@ -103,13 +170,13 @@ function Torneos() {
                   <div className="text-sm font-medium text-gray-900">{torneo.nombre}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{torneo.fechaInicio}</div>
+                  <div className="text-sm text-gray-500">{torneo.fecha_inicio ? torneo.fecha_inicio.slice(0, 10) : ''}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{torneo.fechaConclusión}</div>
+                  <div className="text-sm text-gray-500">{torneo.fecha_fin ? torneo.fecha_fin.slice(0, 10) : ''}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{torneo.lugar}</div>
+                  <div className="text-sm text-gray-500">{torneo.ubicacion}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button
@@ -153,13 +220,24 @@ function Torneos() {
                 </div>
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
+                    Descripción
+                  </label>
+                  <input
+                    type="text"
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    value={torneoActual.descripcion}
+                    onChange={(e) => setTorneoActual({...torneoActual, descripcion: e.target.value})}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-gray-700 text-sm font-bold mb-2">
                     Fecha de Inicio
                   </label>
                   <input
                     type="date"
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    value={torneoActual.fechaInicio}
-                    onChange={(e) => setTorneoActual({...torneoActual, fechaInicio: e.target.value})}
+                    value={torneoActual.fecha_inicio}
+                    onChange={(e) => setTorneoActual({...torneoActual, fecha_inicio: e.target.value})}
                   />
                 </div>
                 <div className="mb-4">
@@ -169,8 +247,8 @@ function Torneos() {
                   <input
                     type="date"
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    value={torneoActual.fechaConclusión}
-                    onChange={(e) => setTorneoActual({...torneoActual, fechaConclusión: e.target.value})}
+                    value={torneoActual.fecha_fin}
+                    onChange={(e) => setTorneoActual({...torneoActual, fecha_fin: e.target.value})}
                   />
                 </div>
                 <div className="mb-4">
@@ -180,8 +258,8 @@ function Torneos() {
                   <input
                     type="text"
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    value={torneoActual.lugar}
-                    onChange={(e) => setTorneoActual({...torneoActual, lugar: e.target.value})}
+                    value={torneoActual.ubicacion}
+                    onChange={(e) => setTorneoActual({...torneoActual, ubicacion: e.target.value})}
                   />
                 </div>
               </div>

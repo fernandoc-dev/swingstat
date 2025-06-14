@@ -1,111 +1,115 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AddButton from '../components/AddButton';
+import { jugadorService, equipoService } from '../services/api';
 
 function Jugadores() {
-  // Estado para los equipos (temporalmente con datos de ejemplo)
-  const [equipos] = useState([
-    { id: 1, nombre: 'Leones' },
-    { id: 2, nombre: 'Tigres' }
-  ]);
-
-  // Estado para los jugadores (temporalmente con datos de ejemplo)
-  const [jugadores, setJugadores] = useState([
-    {
-      id: 1,
-      equipoId: 1,
-      nombre: 'Carlos Rodríguez',
-      foto: 'https://via.placeholder.com/50',
-      fechaNacimiento: '1995-05-15',
-      nacionalidad: 'Mexicana',
-      manoDominante: 'Derecha',
-      posicionHabitual: 'Pitcher'
-    },
-    {
-      id: 2,
-      equipoId: 2,
-      nombre: 'Miguel Sánchez',
-      foto: 'https://via.placeholder.com/50',
-      fechaNacimiento: '1998-08-22',
-      nacionalidad: 'Dominicana',
-      manoDominante: 'Izquierda',
-      posicionHabitual: 'Bateador Designado'
-    }
-  ]);
-
-  // Estado para el modal de creación/edición
+  const [jugadores, setJugadores] = useState([]);
+  const [equipos, setEquipos] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [jugadorActual, setJugadorActual] = useState({
-    equipoId: '',
     nombre: '',
-    foto: '',
-    fechaNacimiento: '',
-    nacionalidad: '',
-    manoDominante: '',
-    posicionHabitual: ''
+    apellido: '',
+    fecha_nacimiento: '',
+    posicion: 'pitcher',
+    numero: '',
+    equipo_id: ''
   });
 
-  // Estado para la vista previa de la foto
-  const [fotoPreview, setFotoPreview] = useState('');
+  // Estados para filtros
+  const [filtroEquipo, setFiltroEquipo] = useState('');
+  const [filtroBusqueda, setFiltroBusqueda] = useState('');
+
+  // Cargar datos al montar el componente
+  useEffect(() => {
+    cargarEquipos();
+    cargarJugadores();
+  }, []);
+
+  const cargarEquipos = async () => {
+    try {
+      const data = await equipoService.getAllEquipos();
+      setEquipos(data);
+    } catch (error) {
+      console.error('Error cargando equipos:', error);
+    }
+  };
+
+  const cargarJugadores = async () => {
+    try {
+      const data = await jugadorService.getAllJugadores();
+      setJugadores(data);
+    } catch (error) {
+      console.error('Error cargando jugadores:', error);
+    }
+  };
 
   const handleCrear = () => {
     setJugadorActual({
-      equipoId: '',
       nombre: '',
-      foto: '',
-      fechaNacimiento: '',
-      nacionalidad: '',
-      manoDominante: '',
-      posicionHabitual: ''
+      apellido: '',
+      fecha_nacimiento: '',
+      posicion: 'pitcher',
+      numero: '',
+      equipo_id: ''
     });
-    setFotoPreview('');
     setShowModal(true);
   };
 
   const handleEditar = (jugador) => {
     setJugadorActual(jugador);
-    setFotoPreview(jugador.foto);
     setShowModal(true);
   };
 
-  const handleEliminar = (id) => {
+  const handleEliminar = async (id) => {
     if (window.confirm('¿Estás seguro de que deseas eliminar este jugador?')) {
-      setJugadores(jugadores.filter(j => j.id !== id));
+      try {
+        await jugadorService.deleteJugador(id);
+        setJugadores(jugadores.filter(j => j.id !== id));
+      } catch (error) {
+        console.error('Error eliminando jugador:', error);
+      }
     }
   };
 
-  const handleGuardar = () => {
-    if (jugadorActual.id) {
-      // Editar jugador existente
-      setJugadores(jugadores.map(j => 
-        j.id === jugadorActual.id ? { ...jugadorActual, foto: fotoPreview } : j
-      ));
-    } else {
-      // Crear nuevo jugador
-      const nuevoJugador = {
-        ...jugadorActual,
-        id: Math.max(...jugadores.map(j => j.id), 0) + 1,
-        foto: fotoPreview
-      };
-      setJugadores([...jugadores, nuevoJugador]);
+  const handleGuardar = async () => {
+    try {
+      // Validar campos requeridos
+      if (!jugadorActual.nombre || !jugadorActual.apellido || !jugadorActual.posicion || 
+          !jugadorActual.numero || !jugadorActual.fecha_nacimiento || !jugadorActual.equipo_id) {
+        alert('Por favor complete todos los campos requeridos');
+        return;
+      }
+
+      if (jugadorActual.id) {
+        // Editar jugador existente
+        const jugadorActualizado = await jugadorService.updateJugador(jugadorActual.id, jugadorActual);
+        setJugadores(jugadores.map(j => j.id === jugadorActualizado.id ? jugadorActualizado : j));
+      } else {
+        // Crear nuevo jugador
+        const nuevoJugador = await jugadorService.createJugador(jugadorActual);
+        setJugadores([...jugadores, nuevoJugador]);
+      }
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error guardando jugador:', error);
+      alert('Error al guardar el jugador. Por favor verifique los datos.');
     }
-    setShowModal(false);
   };
 
-  const handleFotoChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFotoPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  // Función para filtrar jugadores
+  const jugadoresFiltrados = jugadores.filter(jugador => {
+    const cumpleFiltroEquipo = !filtroEquipo || jugador.equipo_id === parseInt(filtroEquipo);
+    const cumpleFiltroBusqueda = !filtroBusqueda || 
+      Object.values(jugador).some(valor => 
+        valor && valor.toString().toLowerCase().includes(filtroBusqueda.toLowerCase())
+      );
+    return cumpleFiltroEquipo && cumpleFiltroBusqueda;
+  });
 
   // Función para obtener el nombre del equipo
   const getNombreEquipo = (equipoId) => {
     const equipo = equipos.find(e => e.id === equipoId);
-    return equipo ? equipo.nombre : 'Equipo no encontrado';
+    return equipo ? equipo.nombre : 'Sin equipo';
   };
 
   return (
@@ -115,14 +119,46 @@ function Jugadores() {
         <AddButton onClick={handleCrear} label="Nuevo Jugador" />
       </div>
 
+      {/* Filtros */}
+      <div className="bg-white rounded-lg shadow p-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Filtrar por Equipo
+            </label>
+            <select
+              className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              value={filtroEquipo}
+              onChange={(e) => setFiltroEquipo(e.target.value)}
+            >
+              <option value="">Todos los equipos</option>
+              {equipos.map(equipo => (
+                <option key={equipo.id} value={equipo.id}>
+                  {equipo.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Buscar
+            </label>
+            <input
+              type="text"
+              className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Buscar por nombre, apellido, posición..."
+              value={filtroBusqueda}
+              onChange={(e) => setFiltroBusqueda(e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
       {/* Tabla de Jugadores */}
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
+      <div className="bg-white rounded-lg shadow overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Foto
-              </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Nombre
               </th>
@@ -130,16 +166,13 @@ function Jugadores() {
                 Equipo
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Fecha de Nacimiento
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Nacionalidad
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Mano Dominante
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Posición
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Número
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Fecha Nacimiento
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Acciones
@@ -147,32 +180,24 @@ function Jugadores() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {jugadores.map((jugador) => (
+            {jugadoresFiltrados.map((jugador) => (
               <tr key={jugador.id}>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <img
-                    src={jugador.foto}
-                    alt={`Foto de ${jugador.nombre}`}
-                    className="h-10 w-10 rounded-full object-cover"
-                  />
+                  <div className="text-sm font-medium text-gray-900">
+                    {jugador.nombre} {jugador.apellido}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{jugador.nombre}</div>
+                  <div className="text-sm text-gray-500">{getNombreEquipo(jugador.equipo_id)}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{getNombreEquipo(jugador.equipoId)}</div>
+                  <div className="text-sm text-gray-500">{jugador.posicion}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{jugador.fechaNacimiento}</div>
+                  <div className="text-sm text-gray-500">{jugador.numero}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{jugador.nacionalidad}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{jugador.manoDominante}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{jugador.posicionHabitual}</div>
+                  <div className="text-sm text-gray-500">{jugador.fecha_nacimiento}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button
@@ -205,12 +230,37 @@ function Jugadores() {
               <div className="mt-2 px-7 py-3">
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Equipo
+                    Nombre <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    value={jugadorActual.nombre}
+                    onChange={(e) => setJugadorActual({...jugadorActual, nombre: e.target.value})}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-gray-700 text-sm font-bold mb-2">
+                    Apellido <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    value={jugadorActual.apellido}
+                    onChange={(e) => setJugadorActual({...jugadorActual, apellido: e.target.value})}
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-gray-700 text-sm font-bold mb-2">
+                    Equipo <span className="text-red-500">*</span>
                   </label>
                   <select
+                    required
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    value={jugadorActual.equipoId}
-                    onChange={(e) => setJugadorActual({...jugadorActual, equipoId: Number(e.target.value)})}
+                    value={jugadorActual.equipo_id}
+                    onChange={(e) => setJugadorActual({...jugadorActual, equipo_id: e.target.value})}
                   >
                     <option value="">Seleccione un equipo</option>
                     {equipos.map(equipo => (
@@ -222,101 +272,49 @@ function Jugadores() {
                 </div>
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Foto
+                    Posición <span className="text-red-500">*</span>
                   </label>
-                  <div className="flex items-center space-x-4">
-                    {fotoPreview && (
-                      <img
-                        src={fotoPreview}
-                        alt="Vista previa de la foto"
-                        className="h-16 w-16 rounded-full object-cover"
-                      />
-                    )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFotoChange}
-                      className="block w-full text-sm text-gray-500
-                        file:mr-4 file:py-2 file:px-4
-                        file:rounded-full file:border-0
-                        file:text-sm file:font-semibold
-                        file:bg-blue-50 file:text-blue-700
-                        hover:file:bg-blue-100"
-                    />
-                  </div>
+                  <select
+                    required
+                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                    value={jugadorActual.posicion}
+                    onChange={(e) => setJugadorActual({...jugadorActual, posicion: e.target.value})}
+                  >
+                    <option value="pitcher">Pitcher</option>
+                    <option value="catcher">Catcher</option>
+                    <option value="infield">Infield</option>
+                    <option value="outfield">Outfield</option>
+                    <option value="designated_hitter">Designated Hitter</option>
+                  </select>
                 </div>
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Nombre
+                    Número <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="text"
+                    required
+                    type="number"
+                    min="0"
+                    max="99"
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    value={jugadorActual.nombre}
-                    onChange={(e) => setJugadorActual({...jugadorActual, nombre: e.target.value})}
+                    value={jugadorActual.numero}
+                    onChange={(e) => setJugadorActual({...jugadorActual, numero: e.target.value})}
                   />
                 </div>
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Fecha de Nacimiento
+                    Fecha de Nacimiento <span className="text-red-500">*</span>
                   </label>
                   <input
+                    required
                     type="date"
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    value={jugadorActual.fechaNacimiento}
-                    onChange={(e) => setJugadorActual({...jugadorActual, fechaNacimiento: e.target.value})}
+                    value={jugadorActual.fecha_nacimiento}
+                    onChange={(e) => setJugadorActual({...jugadorActual, fecha_nacimiento: e.target.value})}
                   />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Nacionalidad
-                  </label>
-                  <input
-                    type="text"
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    value={jugadorActual.nacionalidad}
-                    onChange={(e) => setJugadorActual({...jugadorActual, nacionalidad: e.target.value})}
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Mano Dominante
-                  </label>
-                  <select
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    value={jugadorActual.manoDominante}
-                    onChange={(e) => setJugadorActual({...jugadorActual, manoDominante: e.target.value})}
-                  >
-                    <option value="">Seleccione una opción</option>
-                    <option value="Derecha">Derecha</option>
-                    <option value="Izquierda">Izquierda</option>
-                    <option value="Ambidiestro">Ambidiestro</option>
-                  </select>
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Posición Habitual
-                  </label>
-                  <select
-                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                    value={jugadorActual.posicionHabitual}
-                    onChange={(e) => setJugadorActual({...jugadorActual, posicionHabitual: e.target.value})}
-                  >
-                    <option value="">Seleccione una posición</option>
-                    <option value="Pitcher">Pitcher</option>
-                    <option value="Catcher">Catcher</option>
-                    <option value="Primera Base">Primera Base</option>
-                    <option value="Segunda Base">Segunda Base</option>
-                    <option value="Tercera Base">Tercera Base</option>
-                    <option value="Shortstop">Shortstop</option>
-                    <option value="Jardinero Izquierdo">Jardinero Izquierdo</option>
-                    <option value="Jardinero Central">Jardinero Central</option>
-                    <option value="Jardinero Derecho">Jardinero Derecho</option>
-                    <option value="Bateador Designado">Bateador Designado</option>
-                  </select>
                 </div>
               </div>
-              <div className="flex justify-end gap-4 px-7 py-3">
+              <div className="flex justify-end space-x-3 px-7 py-3">
                 <button
                   className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
                   onClick={() => setShowModal(false)}
