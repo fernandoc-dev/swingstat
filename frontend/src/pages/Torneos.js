@@ -74,6 +74,13 @@ function Torneos() {
 
   const handleGuardar = async () => {
     try {
+      // Validar campos requeridos
+      if (!torneoActual.nombre || !torneoActual.descripcion || !torneoActual.fecha_inicio || 
+          !torneoActual.fecha_fin || !torneoActual.ubicacion) {
+        alert('Por favor complete todos los campos requeridos');
+        return;
+      }
+
       const torneoPayload = {
         nombre: torneoActual.nombre,
         descripcion: torneoActual.descripcion,
@@ -81,6 +88,7 @@ function Torneos() {
         fecha_fin: torneoActual.fecha_fin ? torneoActual.fecha_fin + 'T00:00:00' : '',
         ubicacion: torneoActual.ubicacion
       };
+
       if (torneoActual.id) {
         // Editar torneo existente
         const torneoActualizado = await torneoService.updateTorneo(torneoActual.id, torneoPayload);
@@ -209,9 +217,10 @@ function Torneos() {
               <div className="mt-2 px-7 py-3">
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Nombre
+                    Nombre <span className="text-red-500">*</span>
                   </label>
                   <input
+                    required
                     type="text"
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     value={torneoActual.nombre}
@@ -220,10 +229,10 @@ function Torneos() {
                 </div>
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Descripción
+                    Descripción <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
+                  <textarea
+                    required
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     value={torneoActual.descripcion}
                     onChange={(e) => setTorneoActual({...torneoActual, descripcion: e.target.value})}
@@ -231,9 +240,10 @@ function Torneos() {
                 </div>
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Fecha de Inicio
+                    Fecha de Inicio <span className="text-red-500">*</span>
                   </label>
                   <input
+                    required
                     type="date"
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     value={torneoActual.fecha_inicio}
@@ -242,9 +252,10 @@ function Torneos() {
                 </div>
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Fecha de Conclusión
+                    Fecha de Fin <span className="text-red-500">*</span>
                   </label>
                   <input
+                    required
                     type="date"
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     value={torneoActual.fecha_fin}
@@ -253,9 +264,10 @@ function Torneos() {
                 </div>
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Lugar
+                    Ubicación <span className="text-red-500">*</span>
                   </label>
                   <input
+                    required
                     type="text"
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     value={torneoActual.ubicacion}

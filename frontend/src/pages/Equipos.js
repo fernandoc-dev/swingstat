@@ -54,20 +54,44 @@ function Equipos() {
 
   const handleGuardar = async () => {
     try {
+      // Validar campos requeridos
+      if (!equipoActual.nombre || !equipoActual.ciudad || !equipoActual.entrenador) {
+        alert('Por favor complete todos los campos requeridos');
+        return;
+      }
+
       if (equipoActual.id) {
         // Editar equipo existente
         const equipoActualizado = await equipoService.updateEquipo(equipoActual.id, equipoActual);
         setEquipos(equipos.map(e => e.id === equipoActualizado.id ? equipoActualizado : e));
+        mostrarFeedback('Equipo actualizado exitosamente', 'success');
       } else {
         // Crear nuevo equipo
         const nuevoEquipo = await equipoService.createEquipo(equipoActual);
         setEquipos([...equipos, nuevoEquipo]);
+        mostrarFeedback('Equipo creado exitosamente', 'success');
       }
+      
+      // Cerrar el modal y limpiar el formulario
       setShowModal(false);
-    } catch (error) {
-      console.error('Error guardando equipo:', error);
-      // Aquí podrías mostrar un mensaje de error al usuario
+      setEquipoActual({
+        nombre: '',
+        ciudad: '',
+        entrenador: ''
+      });
+    } catch (err) {
+      console.error('Error guardando equipo:', err);
+      mostrarFeedback('Error al guardar el equipo', 'error');
     }
+  };
+
+  const handleCancelar = () => {
+    setShowModal(false);
+    setEquipoActual({
+      nombre: '',
+      ciudad: '',
+      entrenador: ''
+    });
   };
 
   return (
@@ -139,9 +163,10 @@ function Equipos() {
               <div className="mt-2 px-7 py-3">
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Nombre
+                    Nombre <span className="text-red-500">*</span>
                   </label>
                   <input
+                    required
                     type="text"
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     value={equipoActual.nombre}
@@ -150,9 +175,10 @@ function Equipos() {
                 </div>
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Ciudad
+                    Ciudad <span className="text-red-500">*</span>
                   </label>
                   <input
+                    required
                     type="text"
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     value={equipoActual.ciudad}
@@ -161,9 +187,10 @@ function Equipos() {
                 </div>
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Entrenador
+                    Entrenador <span className="text-red-500">*</span>
                   </label>
                   <input
+                    required
                     type="text"
                     className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                     value={equipoActual.entrenador}
@@ -171,18 +198,20 @@ function Equipos() {
                   />
                 </div>
               </div>
-              <div className="flex justify-end space-x-3 px-7 py-3">
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                 <button
-                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400"
-                  onClick={() => setShowModal(false)}
-                >
-                  Cancelar
-                </button>
-                <button
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                  type="button"
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
                   onClick={handleGuardar}
                 >
                   Guardar
+                </button>
+                <button
+                  type="button"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={handleCancelar}
+                >
+                  Cancelar
                 </button>
               </div>
             </div>
