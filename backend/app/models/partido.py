@@ -13,7 +13,6 @@ class Partido(Base):
         Integer, ForeignKey("equipos.id"), nullable=False)
     fecha = Column(DateTime, nullable=False)
     ubicacion = Column(String(200), nullable=False)
-    estado = Column(String(20), nullable=False)
     resultado_local = Column(Integer, nullable=True)
     resultado_visitante = Column(Integer, nullable=True)
     observaciones = Column(Text, nullable=True)

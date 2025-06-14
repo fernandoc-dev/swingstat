@@ -9,8 +9,6 @@ class TorneoBase(BaseModel):
     fecha_inicio: datetime
     fecha_fin: datetime
     ubicacion: str = Field(..., max_length=200)
-    estado: str = Field(...,
-                        pattern="^(activo|finalizado|programado|suspendido|cancelado)$")
 
 
 class TorneoCreate(TorneoBase):
@@ -23,8 +21,6 @@ class TorneoUpdate(BaseModel):
     fecha_inicio: Optional[datetime] = None
     fecha_fin: Optional[datetime] = None
     ubicacion: Optional[str] = Field(None, max_length=200)
-    estado: Optional[str] = Field(
-        None, pattern="^(activo|finalizado|programado|suspendido|cancelado)$")
 
 
 class TorneoInDB(TorneoBase):

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import date, datetime
 
@@ -10,8 +10,6 @@ class JugadorBase(BaseModel):
     posicion: str = Field(...,
                           pattern="^(pitcher|catcher|infield|outfield|designated_hitter)$")
     numero: int = Field(..., ge=0, le=99)
-    email: Optional[EmailStr] = None
-    telefono: Optional[str] = Field(None, pattern="^\+?[0-9]{10,15}$")
     equipo_id: Optional[int] = None
 
 
@@ -26,8 +24,6 @@ class JugadorUpdate(BaseModel):
     posicion: Optional[str] = Field(
         None, pattern="^(pitcher|catcher|infield|outfield|designated_hitter)$")
     numero: Optional[int] = Field(None, ge=0, le=99)
-    email: Optional[EmailStr] = None
-    telefono: Optional[str] = Field(None, pattern="^\+?[0-9]{10,15}$")
     equipo_id: Optional[int] = None
 
 
