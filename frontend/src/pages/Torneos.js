@@ -26,7 +26,7 @@ function Torneos() {
     try {
       setLoading(true);
       setError(null);
-      const data = await torneoService.getAllTorneos();
+      const data = await torneoService.getAllTorneos(1000, 0);
       setTorneos(data);
     } catch (err) {
       setError('Error al cargar los torneos. Por favor, intente nuevamente.');

@@ -19,7 +19,7 @@ function Equipos() {
 
   const cargarEquipos = async () => {
     try {
-      const data = await equipoService.getAllEquipos();
+      const data = await equipoService.getAllEquipos(1000, 0);
       setEquipos(data);
     } catch (error) {
       console.error('Error cargando equipos:', error);

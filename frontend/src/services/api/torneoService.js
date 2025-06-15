@@ -2,9 +2,9 @@ import apiClient from './client';
 
 const torneoService = {
   // Obtener todos los torneos
-  getAllTorneos: async () => {
+  getAllTorneos: async (limit = 1000, offset = 0) => {
     try {
-      const response = await apiClient.get('/torneos/');
+      const response = await apiClient.get(`/torneos/?limit=${limit}&offset=${offset}`);
       return response.data;
     } catch (error) {
       throw error;

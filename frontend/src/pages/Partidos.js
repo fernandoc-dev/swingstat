@@ -28,9 +28,9 @@ function Partidos() {
   const cargarDatos = async () => {
     try {
       const [partidosData, torneosData, equiposData] = await Promise.all([
-        partidoService.getAllPartidos(),
-        torneoService.getAllTorneos(),
-        equipoService.getAllEquipos()
+        partidoService.getAllPartidos(1000, 0),
+        torneoService.getAllTorneos(1000, 0),
+        equipoService.getAllEquipos(1000, 0)
       ]);
       setPartidos(partidosData);
       setTorneos(torneosData);

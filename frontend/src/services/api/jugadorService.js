@@ -2,9 +2,9 @@ import apiClient from './client';
 
 const jugadorService = {
   // Obtener todos los jugadores
-  getAllJugadores: async () => {
+  getAllJugadores: async (limit = 1000, offset = 0) => {
     try {
-      const response = await apiClient.get('/jugadores/');
+      const response = await apiClient.get(`/jugadores/?limit=${limit}&offset=${offset}`);
       return response.data;
     } catch (error) {
       throw error;

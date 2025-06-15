@@ -2,9 +2,9 @@ import apiClient from './client';
 
 const partidoService = {
   // Obtener todos los partidos
-  getAllPartidos: async () => {
+  getAllPartidos: async (limit = 1000, offset = 0) => {
     try {
-      const response = await apiClient.get('/partidos/');
+      const response = await apiClient.get(`/partidos/?limit=${limit}&offset=${offset}`);
       return response.data;
     } catch (error) {
       throw error;

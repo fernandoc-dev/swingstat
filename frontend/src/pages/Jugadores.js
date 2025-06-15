@@ -27,7 +27,7 @@ function Jugadores() {
 
   const cargarEquipos = async () => {
     try {
-      const data = await equipoService.getAllEquipos();
+      const data = await equipoService.getAllEquipos(1000, 0);
       setEquipos(data);
     } catch (error) {
       console.error('Error cargando equipos:', error);
@@ -36,7 +36,7 @@ function Jugadores() {
 
   const cargarJugadores = async () => {
     try {
-      const data = await jugadorService.getAllJugadores();
+      const data = await jugadorService.getAllJugadores(1000, 0);
       setJugadores(data);
     } catch (error) {
       console.error('Error cargando jugadores:', error);
