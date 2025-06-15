@@ -5,6 +5,7 @@ import { equipoService } from '../services/api';
 function Equipos() {
   const [equipos, setEquipos] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [feedback, setFeedback] = useState({ message: '', type: '' });
   const [equipoActual, setEquipoActual] = useState({
     nombre: '',
     ciudad: '',
@@ -94,12 +95,29 @@ function Equipos() {
     });
   };
 
+  // Función para mostrar feedback
+  const mostrarFeedback = (message, type) => {
+    setFeedback({ message, type });
+    setTimeout(() => {
+      setFeedback({ message: '', type: '' });
+    }, 3000);
+  };
+
   return (
     <div className="container mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Equipos</h1>
         <AddButton onClick={handleCrear} label="Nuevo Equipo" />
       </div>
+
+      {/* Mensaje de Feedback */}
+      {feedback.message && (
+        <div className={`mb-4 p-4 rounded ${
+          feedback.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+        }`}>
+          {feedback.message}
+        </div>
+      )}
 
       {/* Tabla de Equipos */}
       <div className="bg-white rounded-lg shadow overflow-hidden">

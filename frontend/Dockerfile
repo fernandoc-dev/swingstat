@@ -1,18 +1,23 @@
 FROM node:18-alpine
 
+# Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install dependencies
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install
 
-# Copy the rest of the application
+# Copy source code
 COPY . .
 
-# Expose port 3000
-EXPOSE 3000
+# Build React app
+RUN npm run build
 
-# Start the application
-CMD ["npm", "start"] 
+# Install a static server to serve the build folder
+RUN npm install -g serve
+
+# Create a serve.json configuration file
+RUN echo '{"rewrites": [{"source": "**", "destination": "/index.html"}]}' > serve.json
+
+# Serve the production build
+CMD ["serve", "-s", "build", "-l", "3000"]
