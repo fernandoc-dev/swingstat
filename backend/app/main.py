@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import torneo, jugador, equipo, partido, estadistica
+from app.api import torneo, jugador, equipo, partido, estadistica, informes
 
 app = FastAPI(
     title="Swingstat API",
@@ -24,6 +24,7 @@ app.include_router(jugador.router)
 app.include_router(equipo.router)
 app.include_router(partido.router)
 app.include_router(estadistica.router)
+app.include_router(informes.router)
 
 @app.get("/")
 async def root():

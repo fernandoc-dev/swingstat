@@ -239,5 +239,20 @@ export const estadisticaService = {
     if (!response.ok) throw new Error('Error al eliminar estadística');
     return response.json();
   },
+};
+
+// Servicio de Informes
+export const informesService = {
+  generarInforme: async (filtros) => {
+    const response = await fetch(`${API_URL}/informes/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(filtros),
+    });
+    if (!response.ok) throw new Error('Error al generar informe');
+    return response.json();
+  },
 }; 
 

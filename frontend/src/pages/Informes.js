@@ -1,24 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { torneoService, equipoService, jugadorService, informesService } from '../services/api';
 
 function Informes() {
-  // Estado para los datos de ejemplo
-  const [torneos] = useState([
-    { id: 1, nombre: 'Copa Regional' },
-    { id: 2, nombre: 'Liga Nacional' },
-    { id: 3, nombre: 'Torneo Internacional' }
-  ]);
-
-  const [equipos] = useState([
-    { id: 1, nombre: 'Leones' },
-    { id: 2, nombre: 'Tigres' },
-    { id: 3, nombre: 'Águilas' }
-  ]);
-
-  const [jugadores] = useState([
-    { id: 1, nombre: 'Carlos Rodríguez', equipo: 'Leones' },
-    { id: 2, nombre: 'Miguel Sánchez', equipo: 'Tigres' },
-    { id: 3, nombre: 'Juan Pérez', equipo: 'Águilas' }
-  ]);
+  // Estado para los datos reales
+  const [torneos, setTorneos] = useState([]);
+  const [equipos, setEquipos] = useState([]);
+  const [jugadores, setJugadores] = useState([]);
 
   // Estado para los filtros seleccionados
   const [filtros, setFiltros] = useState({
@@ -33,17 +20,38 @@ function Informes() {
   // Estado para los resultados
   const [resultados, setResultados] = useState(null);
 
-  // Opciones de criterios de ordenamiento
+  // Opciones de criterios de ordenamiento basados en el modelo Estadistica
   const criteriosOrdenamiento = [
-    { value: 'homeruns', label: 'Homeruns' },
+    { value: 'turnos_bateo', label: 'Turnos al Bate' },
     { value: 'hits', label: 'Hits' },
-    { value: 'rbi', label: 'Carreras Impulsadas' },
-    { value: 'promedio', label: 'Promedio de Bateo' },
-    { value: 'strikeouts', label: 'Strikeouts' },
-    { value: 'basesRobadas', label: 'Bases Robadas' },
-    { value: 'atajadas', label: 'Atajadas' },
-    { value: 'errores', label: 'Errores' }
+    { value: 'dobles', label: 'Dobles' },
+    { value: 'triples', label: 'Triples' },
+    { value: 'home_runs', label: 'Home Runs' },
+    { value: 'carreras_anotadas', label: 'Carreras Anotadas' },
+    { value: 'carreras_impulsadas', label: 'Carreras Impulsadas' },
+    { value: 'bases_por_bola', label: 'Bases por Bola' },
+    { value: 'ponches', label: 'Ponches' },
+    { value: 'promedio_bateo', label: 'Promedio de Bateo' },
   ];
+
+  // Cargar datos al montar el componente
+  useEffect(() => {
+    const cargarDatos = async () => {
+      try {
+        const [torneosData, equiposData, jugadoresData] = await Promise.all([
+          torneoService.getAllTorneos(),
+          equipoService.getAllEquipos(),
+          jugadorService.getAllJugadores(1000, 0)
+        ]);
+        setTorneos(torneosData);
+        setEquipos(equiposData);
+        setJugadores(jugadoresData);
+      } catch (error) {
+        console.error('Error al cargar datos:', error);
+      }
+    };
+    cargarDatos();
+  }, []);
 
   // Manejar cambios en los filtros
   const handleFiltroChange = (campo, valor) => {
@@ -78,61 +86,35 @@ function Informes() {
     }));
   };
 
-  // Generar resultados de ejemplo
-  const generarResultados = () => {
-    // Datos de ejemplo para la tabla
-    const resultadosEjemplo = [
-      {
-        id: 1,
-        jugador: 'Carlos Rodríguez',
-        equipo: 'Leones',
-        torneo: 'Copa Regional',
-        partidos: 15,
-        turnosAlBate: 45,
-        hits: 18,
-        homeruns: 5,
-        rbi: 15,
-        promedio: 0.400,
-        strikeouts: 8,
-        basesRobadas: 3,
-        atajadas: 25,
-        errores: 1
-      },
-      {
-        id: 2,
-        jugador: 'Miguel Sánchez',
-        equipo: 'Tigres',
-        torneo: 'Copa Regional',
-        partidos: 14,
-        turnosAlBate: 42,
-        hits: 15,
-        homeruns: 4,
-        rbi: 12,
-        promedio: 0.357,
-        strikeouts: 10,
-        basesRobadas: 2,
-        atajadas: 20,
-        errores: 2
-      },
-      {
-        id: 3,
-        jugador: 'Juan Pérez',
-        equipo: 'Águilas',
-        torneo: 'Copa Regional',
-        partidos: 16,
-        turnosAlBate: 48,
-        hits: 20,
-        homeruns: 3,
-        rbi: 18,
-        promedio: 0.417,
-        strikeouts: 6,
-        basesRobadas: 4,
-        atajadas: 22,
-        errores: 1
-      }
-    ];
+  // Generar resultados consultando el endpoint de informes
+  const generarResultados = async () => {
+    try {
+      // Construir el JSON de filtros para el endpoint de informes
+      const filtrosConsulta = {
+        jugador_ids: filtros.jugadores.map(j => j.id),
+        equipo_ids: filtros.equipos.map(e => e.id),
+        torneo_ids: filtros.torneos.map(t => t.id),
+        fecha_inicio: filtros.fechaInicio || undefined,
+        fecha_fin: filtros.fechaFin || undefined,
+        metrica: filtros.criteriosOrdenamiento.length > 0 ? filtros.criteriosOrdenamiento[0].value : undefined
+      };
 
-    setResultados(resultadosEjemplo);
+      // Limpiar filtros vacíos
+      Object.keys(filtrosConsulta).forEach(key => {
+        if (
+          filtrosConsulta[key] === undefined ||
+          (Array.isArray(filtrosConsulta[key]) && filtrosConsulta[key].length === 0)
+        ) {
+          delete filtrosConsulta[key];
+        }
+      });
+
+      // Consultar el backend
+      const resultados = await informesService.generarInforme(filtrosConsulta);
+      setResultados(resultados);
+    } catch (error) {
+      console.error('Error al generar resultados:', error);
+    }
   };
 
   // Componente para mostrar los chips de selección
@@ -155,6 +137,26 @@ function Informes() {
       ))}
     </div>
   );
+
+  // Mapeo de columnas para facilitar el renderizado y el resaltado
+  const columnas = [
+    { key: 'jugador', label: 'Jugador', render: (r) => `${r.jugador_nombre} ${r.jugador_apellido}` },
+    { key: 'equipo_nombre', label: 'Equipo', render: (r) => r.equipo_nombre || '-' },
+    { key: 'turnos_bateo', label: 'AB', render: (r) => r.turnos_bateo },
+    { key: 'hits', label: 'H', render: (r) => r.hits },
+    { key: 'dobles', label: '2B', render: (r) => r.dobles },
+    { key: 'triples', label: '3B', render: (r) => r.triples },
+    { key: 'home_runs', label: 'HR', render: (r) => r.home_runs },
+    { key: 'carreras_anotadas', label: 'CA', render: (r) => r.carreras_anotadas },
+    { key: 'carreras_impulsadas', label: 'CI', render: (r) => r.carreras_impulsadas },
+    { key: 'bases_por_bola', label: 'BB', render: (r) => r.bases_por_bola },
+    { key: 'ponches', label: 'SO', render: (r) => r.ponches },
+    { key: 'promedio_bateo', label: 'AVG', render: (r) => r.promedio_bateo !== undefined && r.promedio_bateo !== null ? Number(r.promedio_bateo).toFixed(3) : '-' },
+  ];
+
+  // Determinar la key de la columna por la que se está ordenando
+  const criterioOrden = filtros.criteriosOrdenamiento[0]?.value || '';
+  const keyOrden = criterioOrden;
 
   return (
     <div className="container mx-auto">
@@ -235,16 +237,22 @@ function Informes() {
               }}
             >
               <option value="">Seleccionar jugador</option>
-              {jugadores.map(jugador => (
-                <option key={jugador.id} value={jugador.id}>
-                  {jugador.nombre} ({jugador.equipo})
-                </option>
-              ))}
+              {jugadores.map(jugador => {
+                const equipo = equipos.find(eq => eq.id === jugador.equipo_id);
+                return (
+                  <option key={jugador.id} value={jugador.id}>
+                    {jugador.nombre} {jugador.apellido} ({equipo ? equipo.nombre : 'Sin equipo'})
+                  </option>
+                );
+              })}
             </select>
             <ChipsSeleccion
               items={filtros.jugadores}
               onRemove={(id) => removerFiltro('jugadores', id)}
-              getLabel={(item) => `${item.nombre} (${item.equipo})`}
+              getLabel={(item) => {
+                const equipo = equipos.find(eq => eq.id === item.equipo_id);
+                return `${item.nombre} ${item.apellido} (${equipo ? equipo.nombre : 'Sin equipo'})`;
+              }}
             />
           </div>
 
@@ -280,10 +288,13 @@ function Informes() {
             </label>
             <select
               className="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              value=""
+              value={filtros.criteriosOrdenamiento[0]?.value || ''}
               onChange={(e) => {
                 const criterio = criteriosOrdenamiento.find(c => c.value === e.target.value);
-                if (criterio) agregarFiltro('criteriosOrdenamiento', criterio);
+                setFiltros(prev => ({
+                  ...prev,
+                  criteriosOrdenamiento: criterio ? [criterio] : []
+                }));
               }}
             >
               <option value="">Seleccionar criterio</option>
@@ -293,11 +304,6 @@ function Informes() {
                 </option>
               ))}
             </select>
-            <ChipsSeleccion
-              items={filtros.criteriosOrdenamiento}
-              onRemove={(id) => removerFiltro('criteriosOrdenamiento', id)}
-              getLabel={(item) => item.label}
-            />
           </div>
         </div>
 
@@ -318,99 +324,31 @@ function Informes() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  #
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Jugador
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Equipo
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Torneo
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Partidos
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  AB
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  H
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  HR
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  RBI
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  AVG
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  SO
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  SB
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  PO
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  E
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                {columnas.map(col => (
+                  <th
+                    key={col.key}
+                    className={`px-6 py-3 text-left text-xs uppercase tracking-wider ${col.key === keyOrden ? 'font-bold text-blue-700' : 'font-medium text-gray-500'}`}
+                  >
+                    {col.label}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {resultados.map((resultado, index) => (
-                <tr key={resultado.id}>
+                <tr key={resultado.jugador_id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {index + 1}
-                    </div>
+                    <div className="text-sm font-medium text-gray-900">{index + 1}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {resultado.jugador}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{resultado.equipo}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{resultado.torneo}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{resultado.partidos}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{resultado.turnosAlBate}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{resultado.hits}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{resultado.homeruns}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{resultado.rbi}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{resultado.promedio.toFixed(3)}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{resultado.strikeouts}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{resultado.basesRobadas}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{resultado.atajadas}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-500">{resultado.errores}</div>
-                  </td>
+                  {columnas.map(col => (
+                    <td
+                      key={col.key}
+                      className={`px-6 py-4 whitespace-nowrap ${col.key === keyOrden ? 'font-bold text-blue-700' : 'text-gray-500'}`}
+                    >
+                      <div className={`text-sm ${col.key === keyOrden ? 'font-bold text-blue-700' : ''}`}>{col.render(resultado)}</div>
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
