@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
+from app.schemas.equipo import EquipoInDB
 
 
 class PartidoBase(BaseModel):
@@ -31,6 +32,17 @@ class PartidoUpdate(BaseModel):
 
 class PartidoInDB(PartidoBase):
     id: int
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class PartidoWithEquipos(PartidoBase):
+    id: int
+    equipo_local: Optional[EquipoInDB]
+    equipo_visitante: Optional[EquipoInDB]
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

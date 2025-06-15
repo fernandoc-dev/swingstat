@@ -1,0 +1,42 @@
+#!/bin/bash
+
+echo ""
+echo "❓ Do you want to update dependencies?"
+echo "  1) Yes"
+echo "  2) No"
+read -p "Select an option [1-2]: " update_choice
+
+if [ "$update_choice" == "1" ]; then
+  echo "🔄 Cleaning old dependencies..."
+  rm -rf node_modules package-lock.json
+
+  echo "🧹 Cleaning npm cache..."
+  npm cache clean --force
+
+  echo "📦 Installing dependencies from package.json..."
+  npm install
+elif [ "$update_choice" == "2" ]; then
+  echo "⏩ Skipping dependency update."
+else
+  echo "❌ Invalid option. Exiting."
+  exit 1
+fi
+
+echo ""
+echo "❓ How do you want to run the project?"
+echo "  1) Development (npm start)"
+echo "  2) Production-like (npm run build + npx serve)"
+read -p "Select an option [1-2]: " run_choice
+
+if [ "$run_choice" == "1" ]; then
+  echo "🚀 Starting in development mode..."
+  npm start
+elif [ "$run_choice" == "2" ]; then
+  echo "🛠️ Building the app..."
+  npm run build
+  echo "📡 Serving the production build on http://localhost:3000 ..."
+  npx serve -s build -l 3000
+else
+  echo "❌ Invalid option. Exiting."
+  exit 1
+fi

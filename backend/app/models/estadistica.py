@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, Text
 from sqlalchemy.sql import func
 from app.db.base_class import Base
+from sqlalchemy.orm import relationship
 
 
 class Estadistica(Base):
@@ -22,3 +23,6 @@ class Estadistica(Base):
     observaciones = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    jugador = relationship("Jugador", backref="estadisticas")
+    partido = relationship("Partido", backref="estadisticas")

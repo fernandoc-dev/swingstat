@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
+from app.schemas.jugador import JugadorInDB
+from app.schemas.partido import PartidoInDB, PartidoWithEquipos
 
 
 class EstadisticaBase(BaseModel):
@@ -41,6 +43,28 @@ class EstadisticaUpdate(BaseModel):
 
 class EstadisticaInDB(EstadisticaBase):
     id: int
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class EstadisticaWithRelations(EstadisticaBase):
+    id: int
+    jugador: Optional[JugadorInDB]
+    partido: Optional[PartidoInDB]
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class EstadisticaWithFullRelations(EstadisticaBase):
+    id: int
+    jugador: Optional[JugadorInDB]
+    partido: Optional[PartidoWithEquipos]
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

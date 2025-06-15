@@ -1,12 +1,25 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException
 from app.models.estadistica import Estadistica
 from app.schemas.estadistica import EstadisticaCreate, EstadisticaUpdate
 from datetime import datetime
+from app.models.jugador import Jugador
+from app.models.partido import Partido
 
 
 def get_estadisticas(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(Estadistica).offset(skip).limit(limit).all()
+    return (
+        db.query(Estadistica)
+        .options(
+            joinedload(Estadistica.jugador).joinedload(Jugador.equipo),
+            joinedload(Estadistica.partido).joinedload(Partido.equipo_local),
+            joinedload(Estadistica.partido).joinedload(
+                Partido.equipo_visitante)
+        )
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 
 def get_estadistica(db: Session, estadistica_id: int):

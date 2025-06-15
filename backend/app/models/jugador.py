@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Date, ForeignKey, DateTime
 from sqlalchemy.sql import func
 from app.db.base_class import Base
+from sqlalchemy.orm import relationship
 
 
 class Jugador(Base):
@@ -15,3 +16,4 @@ class Jugador(Base):
     equipo_id = Column(Integer, ForeignKey("equipos.id"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    equipo = relationship("Equipo", backref="jugadores")
